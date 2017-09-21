@@ -37,7 +37,9 @@ class TimetableSender implements Runnable { // При успешном полу�
 				System.out.println("ОШИБКА РАСПИСАНИЯ!" + result);
 				e.printStackTrace();
 				result = "Ошибка при формировании результата. Перешли это сообщение мне (@Donutellko).\n"
-						+ e.toString() + "\n" + e.getStackTrace()[0].toString() + "\nGroupId = " + group_id;
+						+ e.toString() + "\n" + "\nGroupId = " + group_id;
+				for (int i = 0; i < 5; i++)
+					result += "\n" + e.getStackTrace()[0].toString();
 			}
 
 			DonutellkoBot.donutellkoBot.sendMsg(chat_id, result);
@@ -53,10 +55,16 @@ class TimetableSender implements Runnable { // При успешном полу�
 		String[] vevents = ical.split("BEGIN:VEVENT"); // разделение на блоки (нулевой -- заголовок)
 		Subject[] subjects = new Subject[vevents.length - 1]; // кроме нулевого
 
-		tmp = vevents[0].indexOf("Расписание");
-		String groupN = vevents[0].substring(tmp, vevents[0].indexOf(newline, tmp)); // Получение номера группы
+		int i = 0;
+		tmp = vevents[i].indexOf("NAME:");
+		if (tmp < 0) {
+			i++;
+			tmp = vevents[i].indexOf("NAME:");
+		}
 
-		for (int i = 0; i < vevents.length - 1; i++) {
+		String groupN = vevents[0].substring(tmp + "NAME:".length(), vevents[0].indexOf(newline, tmp)); // Получение номера группы
+
+		for (; i < vevents.length - 1; i++) {
 			subjects[i] = new Subject(vevents[i + 1]);
 		}
 

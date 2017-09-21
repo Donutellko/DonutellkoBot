@@ -27,7 +27,7 @@ public class UserBot {
 		this.chatId = chat.getId();
 		this.isPrivate = chat.isUserChat();
 		this.name = isPrivate ?
-				chat.getFirstName() + " " + chat.getLastName() : chat.getTitle();
+				chat.getFirstName() : chat.getTitle();
 		this.username = chat.getUserName();
 
 		dialog.append("Started chat ").append(isPrivate ? "with " : "in ").append(name);
