@@ -15,12 +15,11 @@ import static com.donutellko.bot.DonutellkoBot.donutellkoBot;
 
 public class UserBot {
 	Long chatId;
-	String name;
-	boolean isPrivate;
-	int groupId = 0;
-	RequestType currentRequest;
-	StringBuilder dialog = new StringBuilder();
-	public String username;
+	private String name;
+	private boolean isPrivate;
+	private int groupId = 0;
+	private RequestType currentRequest;
+	String username;
 
 	UserBot(Update upd) {
 		Chat chat = upd.getMessage().getChat();
@@ -30,7 +29,8 @@ public class UserBot {
 				chat.getFirstName() : chat.getTitle();
 		this.username = chat.getUserName();
 
-		dialog.append("Started chat ").append(isPrivate ? "with " : "in ").append(name);
+//		dialog.append("Started chat ").append(isPrivate ? "with " : "in ").append(name);
+		log("Started chat " + (isPrivate ? "with " : "in ") + name);
 	}
 
 	private void sendMsg(String text) {
@@ -44,6 +44,7 @@ public class UserBot {
 	void process(Update upd) {
 		System.out.println("Processing update: " + upd.getMessage().getFrom().getUserName() + ": " + upd.getMessage().getText());
 		Request request = new Request(upd.getMessage());
+
 
 		String forLog = upd.getMessage().getFrom().getFirstName() + ": " + upd.getMessage().getText();
 		answer(request);
@@ -180,7 +181,7 @@ public class UserBot {
 		}
 	}
 
-	public void questionAnswer(String answer) {
+	private void questionAnswer(String answer) {
 		if (currentRequest == TIMETABLE_NEXT || currentRequest == TIMETABLE_WEEK) {
 			if (answer.matches("[0-9]+")) {
 				groupId = Integer.parseInt(answer);
@@ -197,5 +198,9 @@ public class UserBot {
 
 	public static UserBot getUserBot(String json) {
 		return new Gson().fromJson(json, UserBot.class);
+	}
+
+	void log(String text) {
+		FileWorker.addToFile("logs/" + username + ".log", text);
 	}
 }

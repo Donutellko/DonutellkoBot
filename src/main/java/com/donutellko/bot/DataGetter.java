@@ -24,7 +24,8 @@ public class DataGetter {
 			encoding = uc.getContentEncoding();
 			uc.setConnectTimeout(1000);
 			uc.connect();
-			reader = new BufferedReader(new InputStreamReader(uc.getInputStream()));
+//			reader = new BufferedReader(new InputStreamReader(uc.getInputStream(), "utf-8"));
+			reader = new BufferedReader(new InputStreamReader(uc.getInputStream(), Charset.forName("utf-8")));
 			StringBuilder buffer = new StringBuilder();
 
 			int read;
@@ -37,7 +38,7 @@ public class DataGetter {
 				reader.close();
 		}
 
-		result = new String(result.getBytes(), Charset.forName("UTF-8"));
+//		result = new String(result.getBytes(), Charset.forName("utf-8"));
 //		result = new String(result.getBytes(), Charset.defaultCharset());
 //		result = new String(result.getBytes(), Charset.forName(encoding));
 		return result;

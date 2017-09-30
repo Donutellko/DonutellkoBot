@@ -1,25 +1,57 @@
 package com.donutellko.bot;
 
+import com.google.gson.Gson;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-/**
- * Created by donat on 9/5/17.
- */
+import static com.donutellko.bot.DonutellkoBot.donutellkoBot;
+
 public class Main {
-    public static void main (String[] args) {
+	static Config config = new Config();
 
-        ApiContextInitializer.init();
+	public static void main (String[] args) {
 
-        // Instantiate Telegram Bots API
-        TelegramBotsApi botsApi = new TelegramBotsApi();
+		String configJson = FileWorker.readFromFile(Config.getConfigPath());
+		if (configJson != null) {
+			config = new Gson().fromJson(configJson, Config.class);
+			FileWorker.writeToFile(Config.getConfigPath(), new Gson().toJson(config));
+		}
 
-        // Register our bot
-        try {
-            botsApi.registerBot(new DonutellkoBot());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
+		String dataJson = FileWorker.readFromFile(config.getDataPath());
+		if (configJson != null) {
+			donutellkoBot.createBotsFromJson(dataJson);
+		}
+
+		ApiContextInitializer.init();
+
+		// Instantiate Telegram Bots API
+		TelegramBotsApi botsApi = new TelegramBotsApi();
+		
+		// Register our bot
+		try {
+			botsApi.registerBot(new DonutellkoBot());
+		} catch (TelegramApiException e) {
+			errorLog(e.getStackTrace());
+		}
+
+		ShutdownHook shutdownHook = new ShutdownHook();
+
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
+	}
+
+	static void errorLog(String s) {
+		FileWorker.addToFile(config.getErrorLogPath(),"\n" + s + "\n");
+	}
+
+	private static void errorLog(StackTraceElement[] stackTrace) {
+		errorLog(stackTraceToString(stackTrace));
+	}
+
+	static String stackTraceToString(StackTraceElement[] stackTrace) {
+		StringBuilder sb = new StringBuilder();
+		for (StackTraceElement st : stackTrace)
+			sb.append(st).append("\n");
+		return  sb.toString();
+	}
 }

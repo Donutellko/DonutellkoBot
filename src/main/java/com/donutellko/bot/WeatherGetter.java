@@ -7,6 +7,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static com.donutellko.bot.DataGetter.getDataFromUrl;
+import static com.donutellko.bot.Main.config;
 
 public class WeatherGetter extends Thread {
 	static ResponseObject currentInfo = null;
@@ -28,7 +29,7 @@ public class WeatherGetter extends Thread {
 
 	private void refresh () {
 		try {
-			String response = getDataFromUrl(DonutellkoBot.weatherUrl);
+			String response = getDataFromUrl(config.getWeatherUrl());
 			ResponseObject weathers = new Gson().fromJson(response, ResponseObject.class);
 			WeatherGetter.currentInfo = weathers;
 			WeatherGetter.currentInfoString = WeatherGetter.getToday(weathers);

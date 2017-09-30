@@ -10,23 +10,22 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.util.*;
 
-/**
- * Created by donat on 8/28/17.
- */
+import static com.donutellko.bot.Main.config;
 
 public class DonutellkoBot extends TelegramLongPollingBot {
-	public static DonutellkoBot donutellkoBot;
-	static String weatherUrl = "http://api.openweathermap.org/data/2.5/forecast?id=519690&appid=484811a1b7ad9193b884eb1396f726d1&units=metric&lang=ru";
-	static String myName = "DonutellkoBot";
+	static DonutellkoBot donutellkoBot;
 
 	static Map<Long, UserBot> userBots = new HashMap<>();
 	static List<Long> ids = new LinkedList<>();
+	public static String dataPath = "users.json";
 
 	enum RequestType {START, ECHO, WEATHER, TIMETABLE_NEXT, TIMETABLE_WEEK, SUBSCRIBE, UNSUBSCRIBE, GROUPINFO, STOP, HELP, RESET, UNKNOWN, ADMINISTRATING}
 
 	public DonutellkoBot() {
 		super();
 		donutellkoBot = this;
+
+		sendLog("Starting up.");
 
 		new WeatherGetter("Weather getter thread.").start();
 	}
@@ -42,6 +41,7 @@ public class DonutellkoBot extends TelegramLongPollingBot {
 			userBot = new UserBot(upd);
 			userBots.put(id, userBot);
 			ids.add(id);
+
 		} else
 			userBot = userBots.get(id);
 
@@ -54,7 +54,7 @@ public class DonutellkoBot extends TelegramLongPollingBot {
 
 	@Override
 	public String getBotToken() {
-		return "424429240:AAHSc651dDwaUM_hbhiFjtG5jga9Ya7PFKg";
+		return config.getBotToken();
 	}
 
 	void sendMsg(Long chat_id, String text) {
@@ -77,9 +77,26 @@ public class DonutellkoBot extends TelegramLongPollingBot {
 		}
 	}
 
-	String getBotsJson () {
-		UserBot[] botsArr = (UserBot[]) userBots.values().toArray();
+	void sendLog(String text) {
+		sendMsg(config.getLogChatId(), text);
+	}
+
+	String getUsersJson() {
+		UserBot[] botsArr = new UserBot[userBots.size()];
+		userBots.values().toArray(botsArr);
 		return new Gson().toJson(botsArr);
+	}
+
+	void createBotsFromJson(String json) {
+		UserBot[] users = new Gson().fromJson(json, UserBot[].class);
+		userBots.clear();
+		for (UserBot user : users) {
+			userBots.put(user.chatId, user);
+		}
+	}
+
+	void saveUserBots() {
+		FileWorker.writeToFile(config.getDataPath(), getUsersJson());
 	}
 
 	static class Request {
@@ -94,9 +111,14 @@ public class DonutellkoBot extends TelegramLongPollingBot {
 			chatId = message.getChat().getId();
 			user = userBots.get(chatId);
 
+			if (!message.hasText()) {
+				text = null;
+				return;
+			}
+
 			String msg = message.getText().trim();
 			if (msg.length() > 0 && msg.charAt(0) == '/') { // если первое слово -- команда
-				String command = msg.replace("@" + DonutellkoBot.myName, "");
+				String command = msg.replace("@" + config.getBotName(), "");
 				if (command.indexOf(' ') > 0) {
 					command = command.substring(0, command.indexOf(' '));
 					text = msg.substring(msg.indexOf(' ')).trim();
@@ -154,20 +176,20 @@ public class DonutellkoBot extends TelegramLongPollingBot {
 	static class Administration {
 		// команды, используемые при админстве ботом.
 		public static void sendJson(long logchat_id) {
-			donutellkoBot.sendMsg(logchat_id, donutellkoBot.getBotsJson());
+			donutellkoBot.sendMsg(logchat_id, donutellkoBot.getUsersJson());
 		}
 
-		public static void removeUser(long logchat_id, String username) {
+		public static void removeUser(String username) {
 			for (UserBot ub : userBots.values())
 				if (ub.username.equals(username)) {
 					userBots.remove(ub);
-					donutellkoBot.sendMsg(logchat_id, username + " удалён из базы.");
+					donutellkoBot.sendMsg(config.getLogChatId(), username + " удалён из базы.");
 				}
-			donutellkoBot.sendMsg(logchat_id, "Пользователь " + username + " не найден в базе.");
+			donutellkoBot.sendMsg(config.getLogChatId(), "Пользователь " + username + " не найден в базе.");
 		}
 
-		public static void shutdown(long logchat_id) {
-			donutellkoBot.sendMsg(logchat_id, "Shutting down.");
+		public static void shutdown() {
+			donutellkoBot.sendMsg(config.getLogChatId(), "Shutting down.");
 			System.exit(0);
 		}
 	}
